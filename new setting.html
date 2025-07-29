@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Manager - Settings</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #A8E063, #4F8A10);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .heading {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4F8A10;
+            margin-bottom: 20px;
+        }
+
+        .settings-panel {
+            display: block;
+            background-color: #f7f7f7;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .settings-panel h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .settings-panel div {
+            margin-bottom: 20px;
+        }
+
+        .change-password-btn,
+        .logout-btn {
+            background-color: #4F8A10;
+            color: white;
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            border: none;
+        }
+
+        .change-password-btn:hover,
+        .logout-btn:hover {
+            background-color: #388E3C;
+        }
+
+        .logout-btn i {
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="heading">Settings</div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <h3>Account Settings</h3>
+
+            <!-- About section -->
+            <div>
+                <h4>About</h4>
+                <p>This is your personal finance manager. Here you can manage your account settings.</p>
+            </div>
+
+            <!-- Change Password section -->
+            <div>
+                <h4>Change Password</h4>
+                <button class="change-password-btn" onclick="changePassword()">Change Password</button>
+            </div>
+
+            <!-- Logout section -->
+            <div>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to handle password change
+        function changePassword() {
+            const newPassword = prompt("Enter your new password:");
+
+            // Simulate saving the new password
+            if (newPassword) {
+                alert("Your password has been changed successfully!");
+            }
+        }
+
+        // Function to handle logout and redirect to login page
+        function logout() {
+            alert("Logging out...");
+            window.location.href = "index.html";  // Redirects to login page
+        }
+    </script>
+
+</body>
+</html>

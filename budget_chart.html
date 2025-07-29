@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Graph with Interactive Features</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(to right, #b3cde0, #f7f7f7); /* Light gradient background */
+            color: #333;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            margin: 50px auto;
+            max-width: 1100px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 400px;
+        }
+
+        .btn-export {
+            margin-top: 10px;
+            background: #28a745;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .btn-export:hover {
+            background: #218838;
+        }
+
+        .progress {
+            height: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            font-size: 14px;
+            line-height: 25px;
+        }
+
+        table {
+            margin-top: 30px;
+        }
+
+        /* Styling the Budget Graph Title */
+        h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(45deg, #ff6ec7, #ff8e53, #6a11cb, #2575fc);
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            margin-bottom: 40px;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        /* Pulse Animation for the Title */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            }
+            100% {
+                transform: scale(1.05);
+                text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.6);
+            }
+        }
+
+        /* Custom chart styles */
+        .chart-container {
+            margin-top: 40px;
+            position: relative;
+            height: 400px;
+        }
+
+        /* Custom tooltip styles */
+        .chartjs-tooltip {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+            color: #fff;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Budget Graph Title with Colorful Gradient and Animation -->
+    <h2 class="text-center mb-4">Budget Graph</h2>
+
+    <!-- Time Filter -->
+    <label for="timeFilter" class="form-label">Filter by Time Period:</label>
+    <select id="timeFilter" class="form-select mb-4" onchange="fetchBudgetData()">
+        <option value="all">All Time</option>
+        <option value="month">This Month</option>
+        <option value="week">This Week</option>
+        <option value="year">This Year</option>
+    </select>
+
+    <!-- Chart Container -->
+    <div class="chart-container">
+        <canvas id="budgetChart"></canvas>
+    </div>
+
+    <!-- Export & Download -->
+    <button class="btn btn-export" onclick="downloadChart()">Download Chart (PNG)</button>
+
+    <!-- Budget Summary -->
+    <h4 class="mt-4">Budget Summary</h4>
+    <div class="progress">
+        <div class="progress-bar bg-success" id="remainingProgress" style="width: 60%;">60% Remaining</div>
+    </div>
+    <div class="progress">
+        <div class="progress-bar bg-danger" id="usedProgress" style="width: 40%;">40% Used</div>
+    </div>
+
+    <!-- Data Table -->
+    <h4 class="mt-4">Budget Details</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="budgetTableBody">
+            <!-- Budget data will be dynamically inserted here -->
+        </tbody>
+    </table>
+</div>
+
+
+
+
+<!-- Back to Home Button -->
+<a href="new BudgetandExpenses.html" class="btn-back">&#8592;</a> <!-- Unicode for left arrow -->
+
+<style>
+    /* Back to Home Button */
+    .btn-back {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #ff6ec7;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        text-decoration: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    /* Hover effect to create floating effect */
+    .btn-back:hover {
+        background-color: #ff8e53;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Increased shadow for floating */
+        transform: translateY(-5px); /* Lifting the button */
+    }
+
+    /* Optional: Adding smooth animation when button is not hovered */
+    .btn-back:active {
+        transform: translateY(2px); /* Slightly move down when clicked */
+    }
+</style>
+
+
+
+
+
+
+<script>
+    let budgetChartInstance;
+
+    // ✅ Function to fetch budget data
+    function fetchBudgetData() {
+        const timeFilter = document.getElementById('timeFilter').value;
+
+        // Fetch data from the backend (fetch_budgets.php)
+        fetch(`fetch_budgets.php?filter=${timeFilter}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("📊 Budget Data:", data);
+                updateGraph(data);
+                updateTable(data);
+                updateProgress(data);
+            })
+            .catch(error => console.error("❌ Error fetching data:", error));
+    }
+
+    // ✅ Function to generate chart
+    function updateGraph(budgets) {
+        const labels = budgets.map(b => b.name);
+        const amounts = budgets.map(b => parseFloat(b.amount));
+        const remaining = budgets.map(b => parseFloat(b.remaining_amount));
+
+        const ctx = document.getElementById("budgetChart").getContext("2d");
+
+        if (budgetChartInstance) {
+            budgetChartInstance.destroy();
+        }
+
+        budgetChartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Total Budget",
+                        data: amounts,
+                        backgroundColor: "rgba(75, 192, 192, 0.6)",
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        borderWidth: 1,
+                        borderRadius: 5, // Rounded bars
+                    },
+                    {
+                        label: "Remaining Budget",
+                        data: remaining,
+                        backgroundColor: "rgba(255, 99, 132, 0.6)",
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        borderWidth: 1,
+                        borderRadius: 5, // Rounded bars
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14,
+                                family: "'Poppins', sans-serif",
+                                weight: "600"
+                            },
+                            usePointStyle: true,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ₹${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)', // Light grid lines
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Poppins', sans-serif",
+                                size: 14,
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false, // No grid for X-axis
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Poppins', sans-serif",
+                                size: 14,
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ✅ Function to update progress bars
+    function updateProgress(budgets) {
+        let totalAmount = 0;
+        let remainingAmount = 0;
+
+        budgets.forEach(budget => {
+            totalAmount += parseFloat(budget.amount);
+            remainingAmount += parseFloat(budget.remaining_amount);
+        });
+
+        const usedAmount = totalAmount - remainingAmount;
+        const usedPercentage = ((usedAmount / totalAmount) * 100).toFixed(0);
+        const remainingPercentage = ((remainingAmount / totalAmount) * 100).toFixed(0);
+
+        document.getElementById('remainingProgress').style.width = `${remainingPercentage}%`;
+        document.getElementById('remainingProgress').textContent = `${remainingPercentage}% Remaining`;
+
+        document.getElementById('usedProgress').style.width = `${usedPercentage}%`;
+        document.getElementById('usedProgress').textContent = `${usedPercentage}% Used`;
+    }
+
+    // ✅ Function to update the table
+    function updateTable(budgets) {
+        const tableBody = document.getElementById('budgetTableBody');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        budgets.forEach(budget => {
+            const row = document.createElement('tr');
+
+            // Use created_at as the date
+            let createdAt = budget.created_at;
+
+            // Check if created_at exists and is a valid date
+            if (createdAt && createdAt !== "null" && createdAt !== undefined) {
+                const date = new Date(createdAt);
+                // Ensure it's a valid date
+                if (!isNaN(date.getTime())) {
+                    createdAt = date.toLocaleDateString(); // Format as YYYY-MM-DD or your desired format
+                } else {
+                    createdAt = 'No date'; // Fallback if created_at is not a valid date
+                }
+            } else {
+                createdAt = 'No date'; // Fallback if created_at is undefined or null
+            }
+
+            row.innerHTML = `
+                <td>${createdAt}</td>
+                <td>${budget.name}</td>
+                <td>₹${budget.amount}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // ✅ Function to download chart
+    function downloadChart() {
+        const canvas = document.getElementById('budgetChart');
+        const link = document.createElement('a');
+        link.download = 'budget_chart.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    // ✅ Fetch data on page load
+    window.onload = fetchBudgetData;
+</script>
+
+</body>
+</html>
